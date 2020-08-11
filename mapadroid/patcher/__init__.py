@@ -46,6 +46,7 @@ MAD_UPDATES = OrderedDict([
     (37, 'move_ptc_accounts'),
     (38, 'remove_hatch_delay'),
     (39, 'extend_trs_quest_pogodroid_190')
+    (40, 'pd_auth_override'),
 ])
 
 
