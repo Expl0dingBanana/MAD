@@ -1,10 +1,13 @@
 import copy
 from collections import UserDict
-import mysql
-from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
-from ..resource_search import get_search, SearchType
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+import mysql
+
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from ..dm_exceptions import (DependencyError, SaveIssue, UnknownIdentifier,
+                             UpdateIssue)
+from ..resource_search import SearchType, get_search
 
 logger = get_logger(LoggerEnums.data_manager)
 
@@ -19,7 +22,9 @@ USER_READABLE_ERRORS = {
 
 
 class ResourceTracker(UserDict):
-    def __init__(self, config, data_manager, initialdata={}):
+    def __init__(self, config, data_manager, initialdata=None):
+        if initialdata is None:
+            initialdata = {}
         self.__config = config
         self._data_manager = data_manager
         self.issues = {
@@ -355,7 +360,9 @@ class Resource(object):
             except TypeError:
                 continue
 
-    def presave_validation(self, ignore_issues=[]):
+    def presave_validation(self, ignore_issues=None):
+        if ignore_issues is None:
+            ignore_issues = []
         # Validate required data has been set
         top_levels = ['fields', 'settings']
         issues = {}
@@ -385,7 +392,9 @@ class Resource(object):
                            issues)
             raise UpdateIssue(**issues)
 
-    def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
+    def save(self, core_data=None, force_insert=False, ignore_issues=None, **kwargs):
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         if core_data is None:
             data = self.get_core(clear=True)

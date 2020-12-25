@@ -1,17 +1,14 @@
 import collections
 import copy
-from typing import Optional, List, Dict
-from . import modules
-from .dm_exceptions import (
-    ModeUnknown,
-    ModeNotSpecified,
-    InvalidSection,
-    DataManagerException
-)
-from .modules.resource import Resource
-from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from typing import Dict, List, Optional
 
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from . import modules
+from .dm_exceptions import (DataManagerException, InvalidSection,
+                            ModeNotSpecified, ModeUnknown)
+from .modules.resource import Resource
 
 logger = get_logger(LoggerEnums.data_manager)
 
