@@ -49,50 +49,45 @@ def basic_autoconf(func) -> Any:
         api_creator = ResourceCreator(self.api)
         gacct = None
         session_id = None
-        try:
-            res = self.mitm.post('/autoconfig/register')
-            self.assertTrue(res.status_code == 201)
-            session_id = res.content.decode('utf-8')
-            # Setup basic PD Auth
-            payload = {
-                'username': email_base,
-                'password': pwd_base
-            }
-            (auth_shared, _) = api_creator.create_valid_resource('auth', payload=payload)
-            auth = {
-                'mad_auth': auth_shared['uri'].split('/')[-1]
-            }
-            res = self.api.post('/api/autoconf/pd', json=auth)
-            # Create Google Account
-            gacc = {
-                "login_type": "google",
-                "username": "Unit",
-                "password": "Test"
-            }
-            res = self.api.post('/api/pogoauth', json=gacc)
-            gacct = res.headers['X-URI']
-            self.assertTrue(res.status_code == 201)
-            dev_payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
-            dev_payload['account_id'] = gacct
-            (dev_info, _) = api_creator.create_valid_resource('device', payload=dev_payload)
-            accept_info = {
-                'status': 1,
-                'device_id': dev_info['uri']
-            }
-            res = self.api.post('/api/autoconf/{}'.format(session_id), json=accept_info)
-            self.assertTrue(res.status_code == 200)
-            res = self.mitm.get('/autoconfig/{}/status'.format(session_id))
-            self.assertTrue(res.status_code == 200)
-            (ss_info, _) = api_creator.create_valid_resource('devicesetting')
-            func(self, session_id, dev_info, ss_info, api_creator, *args, **kwargs)
-        except Exception:
-            raise
-        finally:
-            api_creator.remove_resources()
-            if session_id is not None:
-                self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
-            if gacct is not None:
-                self.api.delete(gacct)
+        with GetStorage(self.api) as storage:
+            try:
+                storage.upload_all()
+                create_valid_configs(self, api_creator)
+                res = self.mitm.post('/autoconfig/register')
+                self.assertTrue(res.status_code == 201)
+                session_id = res.content.decode('utf-8')
+                # Create device
+                (dev_info, _) = api_creator.create_valid_resource('device')
+                # Create Google Account
+                gacc = {
+                    "login_type": "google",
+                    "username": "Unit",
+                    "password": "Test",
+                    "device_id": dev_info['uri']
+                }
+                res = self.api.post('/api/pogoauth', json=gacc)
+                self.assertTrue(res.status_code == 201)
+                gacct = res.headers['X-URI']
+                accept_info = {
+                    'status': 1,
+                    'device_id': dev_info['uri']
+                }
+                res = self.api.post('/api/autoconf/{}'.format(session_id), json=accept_info)
+                self.assertTrue(res.status_code == 200)
+                res = self.mitm.get('/autoconfig/{}/status'.format(session_id))
+                self.assertTrue(res.status_code == 200)
+                (ss_info, _) = api_creator.create_valid_resource('devicesetting')
+                func(self, session_id, dev_info, ss_info, api_creator, *args, **kwargs)
+            except Exception:
+                raise
+            finally:
+                self.api.delete('/api/autoconf/rgc')
+                self.api.delete('/api/autoconf/pd')
+                api_creator.remove_resources()
+                if session_id is not None:
+                    self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
+                if gacct is not None:
+                    self.api.delete(gacct)
     return decorated
 
 
@@ -196,7 +191,7 @@ class MITMAutoConf(unittest.TestCase):
                     ]
                 }
                 self.assertListEqual(expected_issues['X-Critical'], json.loads(res.headers['X-Critical']))
-                self.assertListEqual(expected_issues['X-Warnings'], json.loads(res.headers['X-Warnings']))
+                assert AutoConfIssues.no_ggl_login.value in json.loads(res.headers['X-Warnings'])
         finally:
             api_creator.remove_resources()
             if session_id is not None:
@@ -212,7 +207,9 @@ class MITMAutoConf(unittest.TestCase):
         root = xml.etree.ElementTree.fromstring(res.content)
         username = root.find(".//*[@name='user_id']").text
         pwd = root.find(".//*[@name='auth_token']").text
-        self.assertTrue(username == email_base)
+        print("Username: %s" % username)
+        print("Base: %s" % email_base)
+        assert username == email_base
         self.assertTrue(pwd == pwd_base)
         # Test Shared Setting Config
         update_info = {
@@ -331,7 +328,7 @@ class MITMAutoConf(unittest.TestCase):
                     ]
                 }
                 self.assertListEqual(expected_issues['X-Critical'], json.loads(res.headers['X-Critical']))
-                self.assertListEqual(expected_issues['X-Warnings'], json.loads(res.headers['X-Warnings']))
+                assert AutoConfIssues.no_ggl_login.value in json.loads(res.headers['X-Warnings'])
                 storage.upload_rgc()
                 res = self.api.post('/api/autoconf/{}'.format(session_id), json=accept_info)
                 self.assertTrue(res.status_code == 406)
@@ -347,7 +344,7 @@ class MITMAutoConf(unittest.TestCase):
                     ]
                 }
                 self.assertListEqual(expected_issues['X-Critical'], json.loads(res.headers['X-Critical']))
-                self.assertListEqual(expected_issues['X-Warnings'], json.loads(res.headers['X-Warnings']))
+                assert AutoConfIssues.no_ggl_login.value in json.loads(res.headers['X-Warnings'])
                 storage.upload_pd()
                 res = self.api.post('/api/autoconf/{}'.format(session_id), json=accept_info)
                 self.assertTrue(res.status_code == 406)
@@ -363,7 +360,7 @@ class MITMAutoConf(unittest.TestCase):
                     ]
                 }
                 self.assertListEqual(expected_issues['X-Critical'], json.loads(res.headers['X-Critical']))
-                self.assertListEqual(expected_issues['X-Warnings'], json.loads(res.headers['X-Warnings']))
+                assert AutoConfIssues.no_ggl_login.value in json.loads(res.headers['X-Warnings'])
                 storage.upload_pogo()
                 res = self.api.post('/api/autoconf/{}'.format(session_id), json=accept_info)
                 self.assertTrue(res.status_code == 406)
@@ -378,7 +375,7 @@ class MITMAutoConf(unittest.TestCase):
                     ]
                 }
                 self.assertListEqual(expected_issues['X-Critical'], json.loads(res.headers['X-Critical']))
-                self.assertListEqual(expected_issues['X-Warnings'], json.loads(res.headers['X-Warnings']))
+                assert AutoConfIssues.no_ggl_login.value in json.loads(res.headers['X-Warnings'])
         finally:
             api_creator.remove_resources()
             if session_id is not None:

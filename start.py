@@ -337,6 +337,8 @@ if __name__ == "__main__":
             while True:
                 time.sleep(10)
     except KeyboardInterrupt or Exception:
+        import traceback
+        traceback.print_exc()
         logger.info("Shutdown signal received")
     finally:
         try:
