@@ -10,7 +10,7 @@ class Patch(PatchBase):
                 sql = "ALTER TABLE `settings_device`\n"\
                       " ADD `pd_token_override` VARCHAR(128) CHARACTER SET 'utf8mb4' "\
                       " COLLATE 'utf8mb4_unicode_ci' NULL\n"\
-                      " AFTER `account_id`;"
+                      " AFTER `interface_type`;"
                 self._db.execute(sql, commit=True, raise_exec=True)
             if not self._schema_updater.check_column_exists('settings_device', 'auth_id'):
                 sql = "ALTER TABLE `settings_device`\n"\

@@ -386,7 +386,6 @@ CREATE TABLE `settings_device` (
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan',
-    `account_id` int(10) unsigned NULL,
     `pd_token_override` VARCHAR(128) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     `auth_id` int(10) unsigned DEFAULT NULL,
     PRIMARY KEY (`device_id`),
@@ -400,8 +399,6 @@ CREATE TABLE `settings_device` (
         REFERENCES `settings_walker` (`walker_id`),
     CONSTRAINT `settings_device_ibfk_2` FOREIGN KEY (`pool_id`)
         REFERENCES `settings_devicepool` (`pool_id`),
-    CONSTRAINT `settings_device_ibfk_3` FOREIGN KEY (`account_id`)
-        REFERENCES `settings_pogoauth` (`account_id`),
     CONSTRAINT `settings_device_ibfk_4` FOREIGN KEY (`auth_id`)
         REFERENCES `settings_auth` (`auth_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

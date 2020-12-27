@@ -1,9 +1,10 @@
 import copy
 import json
 import unittest
+import xml.etree.ElementTree
 from functools import wraps
 from typing import Any
-import xml.etree.ElementTree
+
 import mapadroid.tests.test_variables as global_variables
 from mapadroid.tests import test_variables
 from mapadroid.tests.test_utils import (GetStorage, ResourceCreator,
@@ -11,7 +12,6 @@ from mapadroid.tests.test_utils import (GetStorage, ResourceCreator,
                                         get_connection_mitm)
 from mapadroid.utils.autoconfig import AutoConfIssues
 from mapadroid.utils.walkerArgs import parse_args
-
 
 args = parse_args()
 email_base: str = "UnitTest@UnitTest.com"

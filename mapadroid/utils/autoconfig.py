@@ -2,7 +2,7 @@ import copy
 import json
 from enum import IntEnum
 from io import BytesIO
-from typing import Any,Dict, List, NoReturn, Tuple, Optional
+from typing import Any, Dict, List, NoReturn, Optional, Tuple
 from xml.sax.saxutils import escape
 
 from flask import Response, url_for
